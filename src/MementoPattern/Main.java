@@ -6,4 +6,21 @@ package MementoPattern;
  * Created by houjue on 2018/11/14.
  */
 public class Main {
+
+    public static void main(String[] args) {
+        Originator originator = new Originator("start game", "hj");
+        originator.show();
+
+        // 备份
+        Memento memento = originator.createMemento();
+        CareTaker careTaker = new CareTaker(memento);
+
+        // 改变状态
+        originator.setState("game over");
+        originator.show();
+
+        // 恢复
+        originator.setMemento(careTaker.getMemento());
+        originator.show();
+    }
 }
