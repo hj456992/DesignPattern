@@ -9,6 +9,12 @@ import java.util.*;
  * Created by houjue on 2019/1/3.
  */
 public class ArrayTest {
+    private static class Interval {
+        int start;
+        int end;
+        Interval() { start = 0; end = 0; }
+        Interval(int s, int e) { start = s; end = e; }
+    }
 
     /**
      * 26. 删除排序数组中的重复项
@@ -826,12 +832,6 @@ public class ArrayTest {
      * 解释: 区间 [1,4] 和 [0,5] 可被视为重叠区间。
      */
     static class Solution12 {
-        public static class Interval {
-            int start;
-            int end;
-            Interval() { start = 0; end = 0; }
-            Interval(int s, int e) { start = s; end = e; }
-        }
         // 解法1，主要是练习快排
         public static List<Interval> merge1(List<Interval> intervals) {
             if (intervals.size() == 0) {
@@ -1137,6 +1137,302 @@ public class ArrayTest {
 
         public static void main(String[] args) {
             System.out.println(containsDuplicate(new int[]{7,3,2,1,2}));
+        }
+    }
+
+    /**
+     * 57. 插入区间
+     * 给出一个无重叠的 ，按照区间起始端点排序的区间列表。
+     *
+     * 在列表中插入一个新的区间，你需要确保列表中的区间仍然有序且不重叠（如果有必要的话，可以合并区间）。
+     *
+     * 示例 1:
+     *
+     * 输入: intervals = [[1,3],[6,9]], newInterval = [2,5]
+     * 输出: [[1,5],[6,9]]
+     * 示例 2:
+     *
+     * 输入: intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval = [4,8]
+     * 输出: [[1,2],[3,10],[12,16]]
+     * 解释: 这是因为新的区间 [4,8] 与 [3,5],[6,7],[8,10] 重叠。
+     */
+    static class Solution17 {
+        // 找到要插入的start和end位置，进行插入
+        public static List<Interval> insert(List<Interval> intervals, Interval newInterval) {
+            List<Interval> res = new ArrayList<>();
+            if (intervals.size() == 0) {
+                res.add(newInterval);
+                return res;
+            }
+
+            int start = 0;
+            int end = 0;
+            int i = 0;
+            for (; i < intervals.size();i ++) {
+                // 插入头部
+                if (i == 0 && newInterval.end < intervals.get(i).start) {
+                    res.add(newInterval);
+                    res.addAll(intervals);
+                    return res;
+                }
+                // 插入尾部
+                if (i == intervals.size() - 1 && newInterval.start > intervals.get(i).end) {
+                    res.add(intervals.get(i));
+                    res.add(newInterval);
+                    return res;
+                }
+                if (newInterval.start >= intervals.get(i).start && newInterval.start <= intervals.get(i).end) {
+                    start = intervals.get(i).start;
+                    break;
+                }
+                if (newInterval.start < intervals.get(i).start) {
+                    start = newInterval.start;
+                    break;
+                }
+                res.add(intervals.get(i));
+            }
+
+            int j = i;
+            while (j < intervals.size()) {
+                if (newInterval.end < intervals.get(j).start) {
+                    end = newInterval.end;
+                    Interval interval = new Interval(start, end);
+                    res.add(interval);
+                    break;
+                }
+                if (j == intervals.size() - 1 && newInterval.end > intervals.get(j).end) {
+                    end = newInterval.end;
+                    Interval interval = new Interval(start, end);
+                    res.add(interval);
+                    j ++;
+                    break;
+                }
+                if (newInterval.end >= intervals.get(j).start && newInterval.end <= intervals.get(j).end) {
+                    end = intervals.get(j).end;
+                    Interval interval = new Interval(start, end);
+                    res.add(interval);
+                    j ++;
+                    break;
+                }
+                j ++;
+            }
+
+            for (int k = j; k < intervals.size(); k ++) {
+                res.add(intervals.get(k));
+            }
+            return res;
+        }
+
+        // 偷懒解法，利用56题的合并区间，先把newInterval加入进list，再调用合并区间
+        public static List<Interval> insert1(List<Interval> intervals, Interval newInterval) {
+            intervals.add(newInterval);
+            return Solution12.merge(intervals);
+        }
+
+
+            public static void main(String[] args) {
+            List<Interval> intervals = new ArrayList<>();
+            Interval interval = new Interval(1,2);
+            Interval interval1 = new Interval(3,5);
+            Interval interval2 = new Interval(6,7);
+            Interval interval3 = new Interval(8,10);
+            Interval interval4 = new Interval(12,16);
+            intervals.add(interval);
+            intervals.add(interval1);
+            intervals.add(interval2);
+            intervals.add(interval3);
+            intervals.add(interval4);
+
+            List<Interval> intervals1 = new ArrayList<>();
+            Interval interval5 = new Interval(1,5);
+            intervals1.add(interval5);
+
+            Interval newInterval = new Interval(0,3);
+
+            List<Interval> res = insert(intervals1, newInterval);
+            for (Interval i : res) {
+                System.out.println(i.start + "   " + i.end);
+            }
+        }
+    }
+
+    /**
+     * 215. 数组中的第K个最大元素
+     * 在未排序的数组中找到第 k 个最大的元素。请注意，你需要找的是数组排序后的第 k 个最大的元素，而不是第 k 个不同的元素。
+     *
+     * 示例 1:
+     *
+     * 输入: [3,2,1,5,6,4] 和 k = 2
+     * 输出: 5
+     * 示例 2:
+     *
+     * 输入: [3,2,3,1,2,4,5,5,6] 和 k = 4
+     * 输出: 4
+     * 说明:
+     *
+     * 你可以假设 k 总是有效的，且 1 ≤ k ≤ 数组的长度。
+     */
+    static class Solution18 {
+        // 解法1，利用快排的思路，当key的索引为len(nums)-k时，即为第k个最大的元素
+        public static int findKthLargest1(int[] nums, int k) {
+            return quickFindKth(nums, nums.length - k, 0, nums.length - 1);
+        }
+
+        // 解法2，Hash思想
+        public static int findKthLargest(int[] nums, int k) {
+            if (nums.length <= 1) {
+                return nums[0];
+            }
+            int min = nums[0];
+            int max = nums[0];
+            for (int i = 1; i < nums.length; i ++) {
+                if (nums[i] > max) {
+                    max = nums[i];
+                }
+                if (nums[i] < min) {
+                    min = nums[i];
+                }
+            }
+
+            int[] hashArr = new int[max - min + 1];
+            for (int n : nums) {
+                hashArr[max - n] ++;
+            }
+            int sum = 0;
+            for (int i = 0; i < hashArr.length; i ++) {
+                sum += hashArr[i];
+                if (sum >= k) {
+                    return max - i;
+                }
+            }
+            return -1;
+        }
+
+        // 解法3，快速选择
+        public int findKthLargest2(int[] nums, int k) {
+            int left=0,right=nums.length-1;
+            while(left<right){
+                int pivot = partition(nums, left,right);
+                if(pivot ==k-1) {
+                    return nums[pivot];
+                } else if(pivot>k-1){
+                    right=pivot-1;
+                } else {
+                    left=pivot+1;
+                }
+            }
+            return nums[left];
+        }
+        private int partition(int[] nums,int left,int right) {
+            //先获取三个数的中位数
+            int pivot = median3(nums,left,right);
+            int start=left,end=right-1;
+            while(start<end) {
+                //从pivot左边开始，停在第一个比pivot小的地方，等待交换
+                while(nums[++start]>pivot) {}
+                //从pivot右边开始，停在第一个比pivot大的地方，等待交换
+                while(nums[--end]<pivot) {}
+                if(start<end) {
+                    swap(nums,start,end);
+                }
+            }
+            //此时，交换start与pivot
+            swap(nums,start, right-1);
+            return start;
+        }
+
+        private int median3(int[] nums,int left, int right){
+            int median=(left+right)/2;
+            if(nums[left]<nums[median]) {
+                swap(nums, left, median);
+            }
+            if(nums[left]<nums[right]) {
+                swap(nums,left, right);
+            }
+            if(nums[median]<nums[right]) {
+                swap(nums, median, right);
+            }
+            swap(nums, median, right-1);
+            return nums[right-1];
+
+        }
+
+        public static int quickFindKth(int[] nums, int k, int low, int high) {
+            int start = low;
+            int end = high;
+            int key = nums[start];// 第0位是索引，第1位是key值
+            int index = -1;
+
+            while (start < end) {
+                while (start < end && key <= nums[end]) {
+                    end --;
+                }
+
+                if (nums[end] < key) {
+                    swap(nums, start, end);
+                    index = end;
+                }
+
+                while (start < end && nums[start] <= key) {
+                    start ++;
+                }
+
+                if (nums[start] > key) {
+                    swap(nums, start, end);
+                    index = start;
+                }
+            }
+
+            if (index == k) {
+                return nums[index];
+            }
+
+            if (low < start) {
+                return quickFindKth(nums, k, low, start - 1);
+            }
+            if (end < high) {
+                return quickFindKth(nums, k, end + 1, high);
+            }
+
+            return nums[k];
+        }
+
+        private static void swap(int[] nums, int i, int j) {
+            int temp = nums[i];
+            nums[i] = nums[j];
+            nums[j] = temp;
+        }
+
+        public static int[] stringToIntegerArray(String input) {
+            input = input.trim();
+            input = input.substring(1, input.length() - 1);
+            if (input.length() == 0) {
+                return new int[0];
+            }
+
+            String[] parts = input.split(",");
+            int[] output = new int[parts.length];
+            for(int index = 0; index < parts.length; index++) {
+                String part = parts[index].trim();
+                output[index] = Integer.parseInt(part);
+            }
+            return output;
+        }
+
+        public static void main(String[] args) throws IOException {
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            String line;
+            while ((line = in.readLine()) != null) {
+                int[] nums = stringToIntegerArray(line);
+                line = in.readLine();
+                int k = Integer.parseInt(line);
+
+                int ret = findKthLargest1(nums, k);
+
+                String out = String.valueOf(ret);
+
+                System.out.print(out);
+            }
         }
     }
 }

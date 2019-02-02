@@ -734,4 +734,329 @@ public class ListTest {
             node.next = node.next.next;
         }
     }
+
+    /**
+     * 160. 相交链表
+     * 编写一个程序，找到两个单链表相交的起始节点。
+     *
+     * 示例 1：
+     * 输入：intersectVal = 8, listA = [4,1,8,4,5], listB = [5,0,1,8,4,5], skipA = 2, skipB = 3
+     * 输出：Reference of the node with value = 8
+     * 输入解释：相交节点的值为 8 （注意，如果两个列表相交则不能为 0）。从各自的表头开始算起，链表 A 为 [4,1,8,4,5]，链表 B 为 [5,0,1,8,4,5]。在 A 中，相交节点前有 2 个节点；在 B 中，相交节点前有 3 个节点。
+     *
+     *
+     * 示例 2：
+     * 输入：intersectVal = 2, listA = [0,9,1,2,4], listB = [3,2,4], skipA = 3, skipB = 1
+     * 输出：Reference of the node with value = 2
+     * 输入解释：相交节点的值为 2 （注意，如果两个列表相交则不能为 0）。从各自的表头开始算起，链表 A 为 [0,9,1,2,4]，链表 B 为 [3,2,4]。在 A 中，相交节点前有 3 个节点；在 B 中，相交节点前有 1 个节点。
+     *
+     *
+     * 示例 3：
+     * 输入：intersectVal = 0, listA = [2,6,4], listB = [1,5], skipA = 3, skipB = 2
+     * 输出：null
+     * 输入解释：从各自的表头开始算起，链表 A 为 [2,6,4]，链表 B 为 [1,5]。由于这两个链表不相交，所以 intersectVal 必须为 0，而 skipA 和 skipB 可以是任意值。
+     * 解释：这两个链表不相交，因此返回 null。
+     *
+     *
+     * 注意：
+     *
+     * 如果两个链表没有交点，返回 null.
+     * 在返回结果后，两个链表仍须保持原有的结构。
+     * 可假定整个链表结构中没有循环。
+     * 程序尽量满足 O(n) 时间复杂度，且仅用 O(1) 内存。
+     */
+    static class Solution7 {
+        public static ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+            // 将A和B截取到等长
+            ListNode p = headA;
+            int lenA = 0;
+            while (p != null) {
+                lenA ++;
+                p = p.next;
+            }
+            p = headA;
+
+            ListNode q = headB;
+            int lenB = 0;
+            while (q != null) {
+                lenB ++;
+                q = q.next;
+            }
+            q = headB;
+
+            int len = Math.abs(lenA - lenB);
+            if (lenA > lenB) {
+                while (len > 0) {
+                    p = p.next;
+                    len --;
+                }
+            } else {
+                while (len > 0) {
+                    q = q.next;
+                    len --;
+                }
+            }
+
+            // 相交节点
+            ListNode cur = p;
+            while (p != null) {
+                if (p != q) {
+                    cur = cur.next;
+                }
+                p = p.next;
+                q = q.next;
+            }
+            return cur;
+        }
+    }
+
+    /**
+     * 148. 排序链表
+     * 在 O(n log n) 时间复杂度和常数级空间复杂度下，对链表进行排序。
+     *
+     * 示例 1:
+     *
+     * 输入: 4->2->1->3
+     * 输出: 1->2->3->4
+     * 示例 2:
+     *
+     * 输入: -1->5->3->4->0
+     * 输出: -1->0->3->4->5
+     */
+    static class Solution8 {
+        // 解法1，偷懒做法，取出每个节点里的数字，重新排序
+        public static ListNode sortList1(ListNode head) {
+            if (head == null) {
+                return head;
+            }
+
+            List<Integer> list = new ArrayList<>();
+            while (head != null) {
+                list.add(head.val);
+                head = head.next;
+            }
+
+            int[] nums = new int[list.size()];
+            for (int i = 0; i < list.size(); i ++) {
+                nums[i] = list.get(i);
+            }
+            quickSort(nums, 0 , nums.length - 1);
+
+            ListNode newList = new ListNode(0);
+            ListNode p = newList;
+            for (Integer num : nums) {
+                p.next = new ListNode(num);
+                p = p.next;
+            }
+            return newList.next;
+        }
+
+        private static void quickSort(int[] nums, int low, int high) {
+            int start = low;
+            int end = high;
+            int key = nums[start];
+
+            while (start < end) {
+                while (start < end && nums[end] >= key) {
+                    end --;
+                }
+                if (nums[end] < key) {
+                    swap(nums, start, end);
+                }
+                while (start < end && key >= nums[start]) {
+                    start ++;
+                }
+                if (nums[start] > key) {
+                    swap(nums, start, end);
+                }
+            }
+
+            if (low < start) {
+                quickSort(nums, low, start - 1);
+            }
+            if (high > end) {
+                quickSort(nums, end + 1, high);
+            }
+        }
+
+        private static void swap(int[] nums, int left, int right) {
+            int temp = nums[left];
+            nums[left] = nums[right];
+            nums[right] = temp;
+        }
+
+        // 解法2，链表的归并排序
+        // 归并排序的步骤：
+        // 1、分解，将当前区间一份唯二，求出分裂点mid
+        // 2、求解，递归地对两个区间[low,mid]和[mid + 1,high]进行归并排序，递归终结条件为区间长度为1
+        // 3、合并，将已排序的区间[low,mid]和[mid + 1,high]进行合并
+        // 链表中求出分裂点mid可以使用快慢指针来获取，当快指针走到尾的时候，慢指针锁指向的位置即为分裂点
+        public static ListNode sortList(ListNode head) {
+            if (head == null || head.next == null) {
+                return head;
+            }
+
+            ListNode high = spilt(head);
+            return merge(head, high);
+        }
+
+        private static ListNode merge(ListNode low, ListNode high) {
+            ListNode n1 = new ListNode(0);
+            if (low.next != null) {
+                ListNode h = spilt(low);
+                n1.next = merge(low, h);
+            } else {
+                n1.next = low;
+            }
+            ListNode n2 = new ListNode(0);
+            if (high.next != null) {
+                ListNode h = spilt(high);
+                n2.next =  merge(high, h);
+            } else {
+                n2.next = high;
+            }
+            ListNode list = new ListNode(0);
+            ListNode k = list;
+            ListNode p = n1.next;// 第一个有序区
+            ListNode q = n2.next;// 第二个有序区
+            while (p != null && q != null) {
+                if (p.val < q.val) {
+                    k.next =  p;
+                    p = p.next;
+                } else {
+                    k.next = q;
+                    q = q.next;
+                }
+                k = k.next;
+            }
+            if (p != null) {
+                k.next = p;
+            }
+            if (q != null) {
+                k.next = q;
+            }
+            return list.next;
+        }
+
+        private static ListNode spilt(ListNode head) {
+            ListNode fast = head;
+            ListNode slow = new ListNode(0);
+
+            while (fast != null &&fast.next != null) {
+                if (slow.next == null) {
+                    slow.next = head;
+
+                }
+                slow = slow.next;
+                fast = fast.next.next;
+            }
+
+            ListNode high = slow.next;
+            slow.next = null;
+            return high;
+        }
+
+        public static int[] stringToIntegerArray(String input) {
+            input = input.trim();
+            input = input.substring(1, input.length() - 1);
+            if (input.length() == 0) {
+                return new int[0];
+            }
+
+            String[] parts = input.split(",");
+            int[] output = new int[parts.length];
+            for(int index = 0; index < parts.length; index++) {
+                String part = parts[index].trim();
+                output[index] = Integer.parseInt(part);
+            }
+            return output;
+        }
+
+        public static ListNode stringToListNode(String input) {
+            // Generate array from the input
+            int[] nodeValues = stringToIntegerArray(input);
+
+            // Now convert that list into linked list
+            ListNode dummyRoot = new ListNode(0);
+            ListNode ptr = dummyRoot;
+            for(int item : nodeValues) {
+                ptr.next = new ListNode(item);
+                ptr = ptr.next;
+            }
+            return dummyRoot.next;
+        }
+
+        public static String listNodeToString(ListNode node) {
+            if (node == null) {
+                return "[]";
+            }
+
+            String result = "";
+            while (node != null) {
+                result += Integer.toString(node.val) + ", ";
+                node = node.next;
+            }
+            return "[" + result.substring(0, result.length() - 2) + "]";
+        }
+
+        public static void main(String[] args) throws IOException {
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            String line;
+            while ((line = in.readLine()) != null) {
+                ListNode head = stringToListNode(line);
+
+                ListNode ret = sortList(head);
+
+                String out = listNodeToString(ret);
+
+                System.out.print(out);
+            }
+        }
+    }
+
+    /**
+     * 142. 环形链表 II
+     * 给定一个链表，返回链表开始入环的第一个节点。 如果链表无环，则返回 null。
+     *
+     * 为了表示给定链表中的环，我们使用整数 pos 来表示链表尾连接到链表中的位置（索引从 0 开始）。 如果 pos 是 -1，则在该链表中没有环。
+     *
+     * 说明：不允许修改给定的链表。
+     *
+     *
+     *
+     * 示例 1：
+     *
+     * 输入：head = [3,2,0,-4], pos = 1
+     * 输出：tail connects to node index 1
+     * 解释：链表中有一个环，其尾部连接到第二个节点
+     */
+    static class Solution9 {
+        // 这个题有一个前提定理： 相遇时 “慢指针走过的大小等于环的大小” 所以目前位置到 环的交叉点 的距离 就等于 从head到交叉点的距离
+        public ListNode detectCycle(ListNode head) {
+            ListNode slow = head;
+            ListNode fast = head;
+
+            boolean isCycle = false;
+            while (fast != null && fast.next != null) {
+                slow = slow.next;
+                fast = fast.next.next;
+
+                if (slow == fast) {
+                    isCycle = true;
+                    break;
+                }
+            }
+            if (!isCycle) {
+                return null;
+            }
+
+            ListNode p = head;
+            while (p != slow) {
+                p = p.next;
+                slow = slow.next;
+            }
+
+            return p;
+        }
+    }
 }
