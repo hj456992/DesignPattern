@@ -1,15 +1,16 @@
 package Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
 
 /**
  * 二叉树练习题
  * Created by houjue on 2019-01-28.
  */
 public class BinaryTree {
-    public class TreeNode {
+    public static class TreeNode {
         int val;
         TreeNode left;
         TreeNode right;
@@ -190,5 +191,178 @@ public class BinaryTree {
             return kthSmallest1(root.right, k);
         }
 
+    }
+
+    /**
+     * 124. 二叉树中的最大路径和
+     * 给定一个非空二叉树，返回其最大路径和。
+     *
+     * 本题中，路径被定义为一条从树中任意节点出发，达到任意节点的序列。该路径至少包含一个节点，且不一定经过根节点。
+     *
+     * 示例 1:
+     *
+     * 输入: [1,2,3]
+     *
+     *        1
+     *       / \
+     *      2   3
+     *
+     * 输出: 6
+     * 示例 2:
+     *
+     * 输入: [-10,9,20,null,null,15,7]
+     *
+     *    -10
+     *    / \
+     *   9  20
+     *     /  \
+     *    15   7
+     *
+     * 输出: 42
+     */
+    static class Solution4 {
+        /**
+         对于任意一个节点, 如果最大和路径包含该节点, 那么只有两种可能:
+         1. 子节点的最大路径由其左右子树中所构成的和路径值较大的那个加上该节点的值后向父节点回溯构成
+         2. 最终的最大路径由左右子树都在最大路径中, 加上该节点的值构成
+         **/
+        int max = Integer.MIN_VALUE;
+        public int maxPathSum(TreeNode root) {
+            dfs(root);
+            return max;
+        }
+
+        private int dfs(TreeNode root) {
+            if (root == null) {
+                return 0;
+            }
+            int maxLeft = Math.max(0, dfs(root.left));
+            int maxRight =  Math.max(0, dfs(root.right));
+            // 判断在该节点包含左右子树的路径和是否大于当前最大路径和
+            max = Math.max(max, maxLeft + maxRight + root.val);
+
+            return Math.max(maxLeft, maxRight) + root.val;
+        }
+    }
+
+    /**
+     * 687. 最长同值路径
+     * 给定一个二叉树，找到最长的路径，这个路径中的每个节点具有相同值。 这条路径可以经过也可以不经过根节点。
+     *
+     * 注意：两个节点之间的路径长度由它们之间的边数表示。
+     *
+     * 示例 1:
+     *
+     * 输入:
+     *
+     *               5
+     *              / \
+     *             4   5
+     *            / \   \
+     *           1   1   5
+     * 输出:
+     *
+     * 2
+     * 示例 2:
+     *
+     * 输入:
+     *
+     *               1
+     *              / \
+     *             4   5
+     *            / \   \
+     *           4   4   5
+     * 输出:
+     *
+     * 2
+     */
+    static class Solution5 {
+        // 解题思路类似于124题,
+        // 对于任意一个节点, 如果最长同值路径包含该节点, 那么只可能是两种情况:
+        // 1. 其左右子树中加上该节点后所构成的同值路径中较长的那个继续向父节点回溯构成最长同值路径
+        // 2. 左右子树加上该节点都在最长同值路径中, 构成了最终的最长同值路径
+        // 需要注意因为要求同值, 所以在判断左右子树能构成的同值路径时要加入当前节点的值作为判断依据
+        private static int maxL = 0;
+        private static int longestUnivaluePath(TreeNode root) {
+            if (root == null) {
+                return maxL;
+            }
+            dfs(root, root.val);
+            return maxL;
+        }
+
+        private static int dfs(TreeNode root, int val) {
+            if (root == null) {
+                return 0;
+            }
+            int leftL = dfs(root.left, root.val);
+            int rightL = dfs(root.right, root.val);
+            maxL = Math.max(leftL + rightL, maxL);
+            if (val == root.val) {
+                // 左右子树较长的向上回溯
+                return Math.max(leftL, rightL) + 1;
+            }
+            return 0;
+        }
+
+        private static class MainClass {
+            public static TreeNode stringToTreeNode(String input) {
+                input = input.trim();
+                input = input.substring(1, input.length() - 1);
+                if (input.length() == 0) {
+                    return null;
+                }
+
+                String[] parts = input.split(",");
+                String item = parts[0];
+                TreeNode root = new TreeNode(Integer.parseInt(item));
+                Queue<TreeNode> nodeQueue = new LinkedList<>();
+                nodeQueue.add(root);
+
+                int index = 1;
+                while(!nodeQueue.isEmpty()) {
+                    TreeNode node = nodeQueue.remove();
+
+                    if (index == parts.length) {
+                        break;
+                    }
+
+                    item = parts[index++];
+                    item = item.trim();
+                    if (!item.equals("null")) {
+                        int leftNumber = Integer.parseInt(item);
+                        node.left = new TreeNode(leftNumber);
+                        nodeQueue.add(node.left);
+                    }
+
+                    if (index == parts.length) {
+                        break;
+                    }
+
+                    item = parts[index++];
+                    item = item.trim();
+                    if (!item.equals("null")) {
+                        int rightNumber = Integer.parseInt(item);
+                        node.right = new TreeNode(rightNumber);
+                        nodeQueue.add(node.right);
+                    }
+                }
+                return root;
+            }
+
+            public static void main(String[] args) throws IOException {
+                BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+                String line;
+                while ((line = in.readLine()) != null) {
+                    TreeNode root = stringToTreeNode(line);
+
+                    int ret = longestUnivaluePath(root);
+
+                    String out = String.valueOf(ret);
+
+                    System.out.print(out);
+                }
+            }
+        }
     }
 }
